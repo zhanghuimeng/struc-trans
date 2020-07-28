@@ -39,34 +39,48 @@ def extract_phrase_pair(srcWordList,
     '''Extract phrase pairs.'''
     lenLimit = 5
     phrasePairList = []
+    srcAlign = [set() for _ in range(len(srcWordList))]
+    trgAlign = [set() for _ in range(len(trgWordList))]
+    for a in alignment:
+        srcAlign[a[0]].add(a[1])
+        trgAlign[a[1]].add(a[0])
     for sb in range(len(srcWordList)):
         for se in range(sb, len(srcWordList)):
             if se - sb + 1 > lenLimit:
                 break
             tb, te = -1, -1
-            for a in alignment:
-                if sb <= a[0] <= se:
-                    if tb == -1 or \
-                            a[1] < tb:
-                        tb = a[1]
-                    if te == -1 or \
-                            a[1] > te:
-                        te = a[1]
-            if tb == -1 or \
-                    te == -1:
+            for s in range(sb, se+1):
+                for t in srcAlign[s]:
+                    if tb == -1 or t < tb:
+                        tb = t
+                    if te == -1 or t > te:
+                        te = t
+            if tb == -1 or te == -1:
                 continue
-			# Add empty alignment
-
             if te - tb + 1 > lenLimit:
                 continue
             consistent = True
-            for a in alignment:
-                if (a[0] < sb or a[0] > se) and \
-                        tb <= a[1] <= te:
-                    consistent = False
+            for t in range(tb, te+1):
+                for s in trgAlign[t]:
+                    if s < sb or s > se:
+                        consistent = False
+                        break
+                if not consistent:
                     break
-            if consistent:
-                phrasePairList.append((sb, se, tb, te))
+            if not consistent:
+                continue
+            # Add empty alignment
+            while tb > 0:
+                if len(trgAlign[tb-1]) == 0:
+                    tb -= 1
+                else:
+                    break
+            while te < len(trgWordList) - 1:
+                if len(trgAlign[te+1]) == 0:
+                    te += 1
+                else:
+                    break
+            phrasePairList.append((sb, se, tb, te))
     return phrasePairList
 
 
@@ -162,6 +176,8 @@ def gen_result(srcWordList,
     resultSrcFile.write(' '.join(taggedSrcWordList) + '\n')
     resultTrgFile.write(' '.join(taggedTrgWordList) + '\n')
 
+    return taggedSrcWordList
+
 
 def add_tag(srcFileName,
             trgFileName,
@@ -174,7 +190,12 @@ def add_tag(srcFileName,
     agtFile = open(agtFileName, 'r', encoding='UTF-8')
     resultSrcFile = open(resultSrcFileName, 'w', encoding='UTF-8')
     resultTrgFile = open(resultTrgFileName, 'w', encoding='UTF-8')
+
+    cnt = 0
+    backLongCnt = 0
+    nowLongCnt = 0
     while True:
+        cnt += 1
         line1 = srcFile.readline()
         line2 = trgFile.readline()
         line3 = agtFile.readline()
@@ -193,13 +214,13 @@ def add_tag(srcFileName,
         if DEBUG:
             show_sent_pair(srcWordList, trgWordList, alignment)
         # extract phrase pairs
-        phrasePairList = extract_phrase_pair(srcWordList, \
-                                             trgWordList, \
+        phrasePairList = extract_phrase_pair(srcWordList,
+                                             trgWordList,
                                              alignment)
         if DEBUG:
-            show_phrase_pair(srcWordList, \
-                             trgWordList, \
-                             alignment, \
+            show_phrase_pair(srcWordList,
+                             trgWordList,
+                             alignment,
                              phrasePairList)
         # randomly select some phrase pairs
         selected = select_phrase_pair(phrasePairList)
@@ -208,7 +229,7 @@ def add_tag(srcFileName,
                              ' '.join([str(pp) for pp in selected]) +
                              '\n')
         # generate the result
-        gen_result(
+        taggedSrcWordList = gen_result(
             srcWordList=srcWordList,
             trgWordList=trgWordList,
             alignment=alignment,
@@ -216,6 +237,13 @@ def add_tag(srcFileName,
             resultSrcFile=resultSrcFile,
             resultTrgFile=resultTrgFile
         )
+
+        if len(srcWordList) > 256:
+            backLongCnt += 1
+        if len(taggedSrcWordList) > 256:
+            nowLongCnt += 1
+        if cnt % 10000 == 0:
+            print("%d: %f/%f" % (cnt, backLongCnt/cnt, nowLongCnt/cnt))
 
 
 if __name__ == '__main__':
