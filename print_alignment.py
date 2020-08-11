@@ -3,11 +3,11 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--src_file", type=str, help="src input file",
-    default="/data/news-zh-en/tagged/train.zh"
+    default="data/news-zh-en/tagged/train.zh"
 )
 parser.add_argument(
     "--trg_file", type=str, help="trg input file",
-    default="/data/news-zh-en/tagged/train.en"
+    default="data/news-zh-en/tagged/train.en"
 )
 parser.add_argument(
     "--align_file", type=str, help="alignment file",
@@ -34,12 +34,12 @@ with open(args.align_file, "r") as f:
 
 with open(args.output_file, "w") as f:
     for i in range(len(src_lines)):
-        print("#%d" % i)
+        f.write("#%d\n" % i)
         for j in range(len(src_lines[i])):
-            print("%s(%d)" % (src_lines[i][j], j), end=" ")
-        print()
+            f.write("%s(%d) " % (src_lines[i][j], j))
+        f.write("\n")
         for j in range(len(trg_lines[i])):
-            print("%s(%d)" % (trg_lines[i][j], j), end=" ")
-        print()
-        print(align[i])
-        print()
+            f.write("%s(%d) " % (trg_lines[i][j], j))
+        f.write("\n")
+        f.write("%s\n" % align[i])
+        f.write("\n")
