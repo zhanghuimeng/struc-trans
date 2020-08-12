@@ -3,6 +3,8 @@
 import argparse
 import sys
 import random
+import string
+import zhon.hanzi
 
 DEBUG = False
 LOG = False
@@ -103,12 +105,13 @@ def show_phrase_pair(srcWordList, trgWordList, alignment, phrasePairList):
         sys.stdout.write('\n')
 
 
-def select_phrase_pair(phrasePairList):
+def select_phrase_pair(srcWordList, trgWordList, phrasePairList):
     """
 	Select phrase pair.
 	:param phrasePairList: 
 	:return: 
 	"""
+    punctuations = string.punctuation + zhon.hanzi.punctuation
     selected = []
     for pp1 in phrasePairList:
         if random.random() > 0.3:
@@ -118,6 +121,22 @@ def select_phrase_pair(phrasePairList):
         if pp1[0] == pp1[1] or \
                 pp1[2] == pp1[3]:
             continue
+
+        # Avoid punctuation
+        ok = True
+        for i in range(pp1[0], pp1[1] + 1):
+            for a in srcWordList[i]:
+                if a in punctuations:
+                    ok = False
+                    break
+            if not ok: break
+        for i in range(pp1[2], pp1[3] + 1):
+            for a in trgWordList[i]:
+                if a in punctuations:
+                    ok = False
+                    break
+            if not ok: break
+        if not ok: continue
 
         overlap = False
         for pp2 in selected:
@@ -223,7 +242,7 @@ def add_tag(srcFileName,
                              alignment,
                              phrasePairList)
         # randomly select some phrase pairs
-        selected = select_phrase_pair(phrasePairList)
+        selected = select_phrase_pair(srcWordList, trgWordList, phrasePairList)
         if DEBUG:
             sys.stdout.write('\nSelected: ' + \
                              ' '.join([str(pp) for pp in selected]) +
