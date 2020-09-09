@@ -1,0 +1,3 @@
+[submodule "THUMT"]
+	path = THUMT
+	url = git@github.com:zhanghuimeng/THUMT.git
