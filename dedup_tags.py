@@ -7,8 +7,9 @@ def get_tag_type_content(seq):
     n = len(seq)
     tag_type = [""] * n
     tag_content = [""] * n
+    prog = re.compile(r"<(/)?(\w*)>")
     for i in range(n):
-        match_obj = re.match(r"<(/)?(\w*)>", seq[i])
+        match_obj = prog.match(seq[i])
         if match_obj:
             if match_obj.group(1) == "/":
                 tag_type[i] = "end"
@@ -95,23 +96,43 @@ for i in range(l):
     for tag in tag_span_dict_src:
         span_src_list = tag_span_dict_src[tag]
         span_trg_list = tag_span_dict_trg[tag]
+        assert len(span_src_list) == len(span_trg_list)
         n1 = len(span_src_list)
+        mask = np.zeros(n1)
         for j in range(n1):
-            cnt = [0] * n1
+            cnt = np.zeros(n1)
             l_src, r_src = span_src_list[j]
             for ts in range(l_src, r_src + 1):
                 for tt in align_set[ts]:
                     for k in range(n1):
                         if span_trg_list[k][0] <= tt <= span_trg_list[k][1]:
                             cnt[k] += 1
+            cnt += mask
             align = np.argmax(cnt)
             l_trg, r_trg = span_trg_list[align]
+            mask[align] = -1e9
             src_lines[i][l_src] = trg_lines[i][l_trg] = "<%s_%d>" % (tag_content_src[l_src], j)
             src_lines[i][r_src] = trg_lines[i][r_trg] = "</%s_%d>" % (tag_content_src[l_src], j)
 
     # print(" ".join(src_lines[i]))
     # print(" ".join(trg_lines[i]))
     # input()
+
+# check and output
+prog = re.compile(r"<(/)?(\w*)>")
+src_tag_dict = {}
+trg_tag_dict = {}
+for line in src_lines:
+    for token in line:
+        if prog.match(token):
+            src_tag_dict[token] = src_tag_dict.get(token, 0) + 1
+for line in trg_lines:
+    for token in line:
+        if prog.match(token):
+            trg_tag_dict[token] = trg_tag_dict.get(token, 0) + 1
+for token in src_tag_dict:
+    print("%s src_cnt=%d trg_cnt=%d" % (token, src_tag_dict[token], trg_tag_dict[token]))
+    assert src_tag_dict[token] == trg_tag_dict[token]
 
 with open(args.output_src_file, "w") as f:
     f.writelines([" ".join(line) + "\n" for line in src_lines])
