@@ -76,7 +76,6 @@ parser.add_argument(
 )
 parser.add_argument(
     "--tgt_file", type=str, help="target input file",
-    default="data/xml/dedup/train.32k.zh.dedup.shuf"
 )
 parser.add_argument(
     "--debug", help="show type matrix", action="store_true")
