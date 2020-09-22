@@ -86,12 +86,12 @@ args = parser.parse_args()
 
 with open(args.src_file, "r", encoding="UTF-8") as f:
     src_lines = f.readlines()
-src_lines = [line.rstrip().split(" ") for line in src_lines]
+src_lines = [line.rstrip().split(" ") + ["eos"] for line in src_lines]
 
 if args.tgt_file:
     with open(args.tgt_file, "r", encoding="UTF-8") as f:
         tgt_lines = f.readlines()
-    tgt_lines = [line.rstrip().split(" ") for line in tgt_lines]
+    tgt_lines = [["bos"] + line.rstrip().split(" ") for line in tgt_lines]
     assert len(src_lines) == len(tgt_lines)
 
 # 0: green, 1: red, 2: blue
