@@ -29,7 +29,6 @@ def test_update_dec_self_attn_batch_cpu(tgt_seq, tgt_vocab):
         )
         helper.update_dec_self_attn_batch_cpu(
             step=i,
-            batch_size=tgt_seq.shape[0],
             mat=mat,
             nearest_q=nearest_q,
             stack_history_k=stack_history_k,
@@ -59,7 +58,6 @@ def test_update_enc_dec_attn_batch_cpu(src_seq, src_vocab,
         )
         helper.update_enc_dec_attn_batch_cpu(
             step=i,
-            batch_size=batch_size,
             length_k=src_seq.shape[1],
             mat=mat,
             nearest_q=nearest_q,
@@ -90,9 +88,6 @@ src_sent = np.array([i + [0] * (pad - len(i)) for i in src_sent_list])
 pad_id = tgt_vocab["word2idx"]["<pad>"]
 pad = len(max(tgt_sent_list, key=len))
 tgt_sent = np.array([i + [0] * (pad - len(i)) for i in tgt_sent_list])
-
-src_sent = np.reshape(src_sent, (1, -1))
-tgt_sent = np.reshape(tgt_sent, (1, -1))
 
 dec_self_attn_0 = test_gen_typed_matrix_cpu(tgt_sent, tgt_sent, tgt_vocab, tgt_vocab)
 enc_dec_attn_0 = test_gen_typed_matrix_cpu(tgt_sent, src_sent, tgt_vocab, src_vocab)
