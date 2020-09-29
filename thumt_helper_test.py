@@ -12,7 +12,7 @@ def test_gen_typed_matrix_cpu(seq_q, seq_k, vocab_q, vocab_k):
 
 def test_update_dec_self_attn_batch_cpu(tgt_seq, tgt_vocab):
     batch_size, length = tgt_seq.shape
-    mat = np.zeros([3, batch_size, 512, 512], np.int32)
+    mat = np.zeros([batch_size, 512, 512], np.int32)
     stack = np.full([batch_size, 512], -1, np.int32)
     stack_pointer = np.full([batch_size], 0, np.int32)
     nearest_q = np.full([batch_size, 512], -1, np.int32)
@@ -39,7 +39,7 @@ def test_update_dec_self_attn_batch_cpu(tgt_seq, tgt_vocab):
 def test_update_enc_dec_attn_batch_cpu(src_seq, src_vocab,
                                        tgt_seq, tgt_vocab):
     batch_size, tgt_length = tgt_seq.shape
-    mat = np.zeros([3, batch_size, 512, 512], np.int32)
+    mat = np.zeros([batch_size, 512, 512], np.int32)
     stack = np.full([batch_size, 512], -1, np.int32)
     stack_pointer = np.full([batch_size], 0, np.int32)
     nearest_q = np.full([batch_size, 512], -1, np.int32)
@@ -66,8 +66,8 @@ def test_update_enc_dec_attn_batch_cpu(src_seq, src_vocab,
     return mat
 
 
-def print_attn_mat(tensor):
-    print(np.squeeze(tensor[0]) * 1 + np.squeeze(tensor[1]) * 2 + np.squeeze(tensor[2]) * 3)
+def merge_attn_mat(tensor):
+    return np.squeeze(tensor[0]) * 1 + np.squeeze(tensor[1]) * 2 + np.squeeze(tensor[2]) * 3
 
 
 src_vocab, tgt_vocab = vocab.load_tagged_vocabulary(
@@ -90,15 +90,17 @@ pad = len(max(tgt_sent_list, key=len))
 tgt_sent = np.array([i + [0] * (pad - len(i)) for i in tgt_sent_list])
 
 dec_self_attn_0 = test_gen_typed_matrix_cpu(tgt_sent, tgt_sent, tgt_vocab, tgt_vocab)
+dec_self_attn_0 = merge_attn_mat(dec_self_attn_0)
 enc_dec_attn_0 = test_gen_typed_matrix_cpu(tgt_sent, src_sent, tgt_vocab, src_vocab)
+enc_dec_attn_0 = merge_attn_mat(enc_dec_attn_0)
 
 src_length = src_sent.shape[1]
 tgt_length = tgt_sent.shape[1]
 dec_self_attn_1 = test_update_dec_self_attn_batch_cpu(tgt_sent, tgt_vocab)
-dec_self_attn_1 = dec_self_attn_1[:, :, :tgt_length, :tgt_length]
+dec_self_attn_1 = dec_self_attn_1[:, :tgt_length, :tgt_length]
 enc_dec_attn_1 = test_update_enc_dec_attn_batch_cpu(
     src_sent, src_vocab, tgt_sent, tgt_vocab)
-enc_dec_attn_1 = enc_dec_attn_1[:, :, :tgt_length, :src_length]
+enc_dec_attn_1 = enc_dec_attn_1[:, :tgt_length, :src_length]
 
 assert (dec_self_attn_0 == dec_self_attn_1).all()
 assert (enc_dec_attn_0 == enc_dec_attn_1).all()
