@@ -67,7 +67,7 @@ def test_update_enc_dec_attn_batch_cpu(src_seq, src_vocab,
 
 
 def merge_attn_mat(tensor):
-    return np.squeeze(tensor[0]) * 1 + np.squeeze(tensor[1]) * 2 + np.squeeze(tensor[2]) * 3
+    return np.squeeze(tensor[0]) * 0 + np.squeeze(tensor[1]) * 1 + np.squeeze(tensor[2]) * 2
 
 
 src_vocab, tgt_vocab = vocab.load_tagged_vocabulary(
