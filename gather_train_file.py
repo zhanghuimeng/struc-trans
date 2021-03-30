@@ -8,7 +8,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--trg_file", type=str, nargs="*", help="trg input file",
-    default="localization-xml-mt/data/enzh/enzh_zh_train.json"
+    default=None,
 )
 parser.add_argument(
     "--output_src_file", type=str, help="src output file",
@@ -19,23 +19,23 @@ parser.add_argument(
     default="data/xml/train.zh")
 args = parser.parse_args()
 
-with open(args.src_file, "r") as f:
+with open(args.src_file, "r", encoding="utf-8") as f:
     src_json = json.load(f)
 src_lines = []
 for id in src_json["text"]:
     src_lines.append(src_json["text"][id])
 
-with open(args.output_src_file, "w") as f:
+with open(args.output_src_file, "w", encoding="utf-8") as f:
     for line in src_lines:
         f.write("%s\n" % line)
 
 if args.trg_file:
-    with open(args.trg_file[0], "r") as f:
+    with open(args.trg_file[0], "r", encoding="utf-8") as f:
         trg_json = json.load(f)
     trg_lines = []
     for id in trg_json["text"]:
         trg_lines.append(trg_json["text"][id])
 
-    with open(args.output_trg_file, "w") as f:
+    with open(args.output_trg_file, "w", encoding="utf-8") as f:
         for line in trg_lines:
             f.write("%s\n" % line)

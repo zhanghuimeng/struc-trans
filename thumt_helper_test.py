@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import thumt.data.vocab as vocab
-import thumt.utils.helper as helper
+import thumt.utils.struc_helper as helper
 
 
 def test_gen_typed_matrix_cpu(seq_q, seq_k, vocab_q, vocab_k):
