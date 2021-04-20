@@ -5,11 +5,19 @@ import yaml
 import random
 import numpy as np
 
+CLAUSE_PUNCS = {
+    "en": "~!,.?:'\"()",
+    "zh": "~!,.?:'\"()、！，。？…：“”（）《》「」",
+}
+
 Token = collections.namedtuple("Token", "token type name word_start")
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--corpus_file", type=str, help="input corpus file",
+)
+parser.add_argument(
+    "--lang", type=str, help="language of input corpus file",
 )
 parser.add_argument(
     "--config_file", type=str, help="config file",
@@ -19,6 +27,9 @@ parser.add_argument(
 )
 parser.add_argument(
     "--whole_mask", action="store_true", help="output file",
+)
+parser.add_argument(
+    "--no_pass_clauses", action="store_true", help="output file",
 )
 args = parser.parse_args()
 
@@ -36,6 +47,12 @@ M = len(tag_name)
 token_cnt_all = 0
 tag_cnt = [0] * M
 N = 0
+
+# fail statistics
+open_close_fail_cnt = 0
+whole_mask_fail_cnt = 0
+clause_pass_fail_cnt = 0
+
 with open(args.corpus_file, "r") as f:
     with open(args.output_file, "w") as fw:
         for line in f:
@@ -60,7 +77,7 @@ with open(args.corpus_file, "r") as f:
 
                 # try to insert a tag
                 all_enclose_trial_cnt = 0
-                while all_enclose_trial_cnt < 500:
+                while all_enclose_trial_cnt < 1000:
                     enclose_len = round(np.random.normal(tag_enclosed[selected_tag_idx]))
                     if enclose_len > len(tokens):
                         enclose_len = len(tokens)
@@ -75,18 +92,29 @@ with open(args.corpus_file, "r") as f:
                             while end < len(tokens) and not tokens[end].word_start:
                                 end += 1
                             if start >= end or end > len(tokens):
+                                whole_mask_fail_cnt += 1
                                 one_len_trail_cnt += 1
                                 continue
                         # check open/close tags
                         open_close_cnt = 0
+                        have_punc = False
                         for i in range(start, end):
                             if tokens[i].type == "start":
                                 open_close_cnt += 1
                             elif tokens[i].type == "end":
                                 open_close_cnt -= 1
                             if open_close_cnt < 0:
+                                open_close_fail_cnt += 1
                                 break
-                        if open_close_cnt != 0:
+                            if args.no_pass_clauses:
+                                for punc in CLAUSE_PUNCS[args.lang]:
+                                    if punc in tokens[i].token:
+                                        have_punc = True
+                                        break
+                                if have_punc:
+                                    clause_pass_fail_cnt += 1
+                                    break
+                        if open_close_cnt != 0 or have_punc:
                             one_len_trail_cnt += 1
                             continue
                         new_tokens = []
@@ -121,3 +149,7 @@ with open(args.corpus_file, "r") as f:
                 for i in range(M):
                     print("Tag <%s> percentage: %.02f%% (expected: %.02f%%)" % (tag_name[i], tag_cnt[i] / sum(tag_cnt) * 100,
                                                                                 tag_prob[i] * 100))
+                print("Failures:")
+                print("Whole mask fails: %d" % whole_mask_fail_cnt)
+                print("Open/close tag fails: %d" % open_close_fail_cnt)
+                print("Clause fails: %d" % clause_pass_fail_cnt)
