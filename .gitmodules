@@ -1,6 +1,3 @@
 [submodule "THUMT"]
 	path = THUMT
 	url = git@github.com:zhanghuimeng/THUMT.git
-[submodule "AttnViz"]
-	path = AttnViz
-	url = git@github.com:zhanghuimeng/AttnViz.git
