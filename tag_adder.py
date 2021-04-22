@@ -46,8 +46,11 @@ for k in my_dict["tag_info"]:
     tag_enclosed.append(my_dict["tag_info"][k]["len"])
 M = len(tag_name)
 
-with open(args.is_word_start, "r") as f:
-    is_word_start = json.load(f)
+if args.is_word_start:
+    with open(args.is_word_start, "r") as f:
+        is_word_start = json.load(f)
+else:
+    is_word_start = {}
 
 token_cnt_all = 0
 tag_cnt = [0] * M
