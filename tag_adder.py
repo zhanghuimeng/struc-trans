@@ -2,12 +2,14 @@ import argparse
 import collections
 import nltk
 import yaml
+import json
 import random
 import numpy as np
 
 CLAUSE_PUNCS = {
     "en": "~!,.?:'\"()",
     "zh": "~!,.?:'\"()、！，。？…：“”（）《》「」",
+    # TODO: 增加其他语言的分句符号
 }
 
 Token = collections.namedtuple("Token", "token type name word_start")
@@ -26,10 +28,10 @@ parser.add_argument(
     "--output_file", type=str, help="output file",
 )
 parser.add_argument(
-    "--whole_mask", action="store_true", help="output file",
+    "--is_word_start", type=str, help="word start dict",
 )
 parser.add_argument(
-    "--no_pass_clauses", action="store_true", help="output file",
+    "--no_pass_clauses", action="store_true", help="whether to use CLAUSE_PUNCS or not",
 )
 args = parser.parse_args()
 
@@ -43,6 +45,9 @@ for k in my_dict["tag_info"]:
     tag_prob.append(my_dict["tag_info"][k]["p"])
     tag_enclosed.append(my_dict["tag_info"][k]["len"])
 M = len(tag_name)
+
+with open(args.is_word_start, "r") as f:
+    is_word_start = json.load(f)
 
 token_cnt_all = 0
 tag_cnt = [0] * M
@@ -59,7 +64,7 @@ with open(args.corpus_file, "r") as f:
             tokens = line.rstrip().split(" ")
 
             tokens = [Token(token=token, type="plain", name="",
-                            word_start=True if "▁" in token else False) for token in tokens]
+                            word_start=is_word_start.get(token, True)) for token in tokens]
             L = len(tokens)
             token_cnt_all += L
 
@@ -86,15 +91,14 @@ with open(args.corpus_file, "r") as f:
                         start = random.randint(0, len(tokens) - enclose_len)
                         end = start + enclose_len
                         # whole word masking
-                        if args.whole_mask:
-                            while start < len(tokens) and not tokens[start].word_start:
-                                start += 1
-                            while end < len(tokens) and not tokens[end].word_start:
-                                end += 1
-                            if start >= end or end > len(tokens):
-                                whole_mask_fail_cnt += 1
-                                one_len_trail_cnt += 1
-                                continue
+                        while start < len(tokens) and not tokens[start].word_start:
+                            start += 1
+                        while end < len(tokens) and not tokens[end].word_start:
+                            end += 1
+                        if start >= end or end > len(tokens):
+                            whole_mask_fail_cnt += 1
+                            one_len_trail_cnt += 1
+                            continue
                         # check open/close tags
                         open_close_cnt = 0
                         have_punc = False
