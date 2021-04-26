@@ -7,6 +7,10 @@ parser.add_argument(
     default="localization-xml-mt/data/enzh/enzh_zh_dev.json"
 )
 parser.add_argument(
+    "--lang", type=str, help="json id file",
+    default="zh"
+)
+parser.add_argument(
     "--input_file", type=str, help="translation output",
     default="exp/xml-baseline/dev.trans.norm"
 )
@@ -31,7 +35,7 @@ with open(args.input_file, "r") as f:
     if args.remove_space:
         lines = [line.replace(" ", "") for line in lines]
 
-output = {"lang": "zh", "type": "translation", "text": {}}
+output = {"lang": args.lang, "type": "translation", "text": {}}
 for i in range(len(id_list)):
     output["text"][id_list[i]] = lines[i]
 
